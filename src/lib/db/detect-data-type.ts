@@ -18,7 +18,7 @@ const isDate = (v: string): boolean => {
 };
 
 const isTimestamp = (v: string): boolean => {
-  const pattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
+  const pattern = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/; // open end
   return pattern.test(v);
 };
 
