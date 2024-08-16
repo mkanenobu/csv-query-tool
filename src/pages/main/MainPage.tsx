@@ -46,6 +46,7 @@ const useCreateTableAndData = () => {
         console.log("table created", res);
       })
       .catch((error) => {
+        console.error("table creation error", error);
         toast({
           title: "Table Creation Error",
           description: error.message as string,
@@ -66,6 +67,7 @@ const useCreateTableAndData = () => {
         console.log("data inserted", res);
       })
       .catch((error) => {
+        console.error("data insertion error", error);
         toast({
           title: "Data Insertion Error",
           description: error.message as string,
@@ -95,6 +97,7 @@ export const useExecuteUserQuery = () => {
         });
       })
       .catch((error) => {
+        console.error("query error", error);
         toast({
           title: "Query Error",
           description: error.message as string,
