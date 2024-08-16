@@ -36,6 +36,7 @@ export const MainPage = () => {
     setData(rest);
 
     const table = file.name.split(".").at(0)!;
+
     const creatTableQuery = generateCreateTableQueryByCsv(table, head, rest);
     console.log("creatTableQuery", creatTableQuery);
     await db.query(creatTableQuery).then((res) => {

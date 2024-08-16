@@ -550,6 +550,7 @@ dependencies = [
 name = "csv-query-tool"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-openai",
  "serde",
  "serde_json",
