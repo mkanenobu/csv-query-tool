@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { db } from "@/db/db.ts";
+import { db } from "@/lib/db/db.ts";
 import { PGliteProvider } from "@electric-sql/pglite-react";
 import { Toaster } from "@/components/ui/toaster";
 

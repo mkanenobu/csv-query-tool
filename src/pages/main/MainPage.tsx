@@ -1,31 +1,125 @@
 import { Input } from "@/components/ui/input.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
 import { type ChangeEvent, useState } from "react";
 import { parseCsv } from "@/lib/parse-csv.ts";
 import { DataPreviewTable } from "@/pages/main/DataPreviewTable.tsx";
 import { Card } from "@/components/ui/card.tsx";
 import { usePGlite } from "@electric-sql/pglite-react";
-import {
-  generateBulkInsertQueryByCsv,
-  generateCreateTableQueryByCsv,
-} from "@/lib/db.ts";
 import { QueryResultTable } from "@/pages/main/QueryResultTable.tsx";
 import { useToast } from "@/components/ui/use-toast.ts";
 import { Button } from "@/components/ui/button.tsx";
+import {
+  generateBulkInsertQuery,
+  generateCreateTableQuery,
+  generateDataSchemaFromCsvData,
+  type QueryResult,
+} from "@/lib/db/queries.ts";
+import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
+import { QueryEditor } from "@/pages/main/QueryEditor.tsx";
+import { noParse } from "@/lib/db/query-options.ts";
 
-export const MainPage = () => {
+const useCreateTableAndData = () => {
   const db = usePGlite();
   const { toast } = useToast();
 
-  const [query, setQuery] = useState("");
-  const [queryResult, setQueryResult] = useState<any>(null);
+  return async ({
+    tableName,
+    header,
+    data,
+  }: {
+    tableName: string;
+    header: string[];
+    data: string[][];
+  }) => {
+    const dataSchema = generateDataSchemaFromCsvData({
+      header,
+      data,
+    });
 
-  const [header, setHeader] = useState<string[]>(["example1", "example2"]);
-  const [data, setData] = useState<any[][]>([
-    ["data1-1", "data1-2"],
-    ["data2-1", "data2-2"],
-  ]);
+    const creatTableQuery = generateCreateTableQuery({
+      tableName,
+      schema: dataSchema,
+    });
+    console.log("creatTableQuery", creatTableQuery);
+    await db
+      .query(creatTableQuery)
+      .then((res) => {
+        console.log("table created", res);
+      })
+      .catch((error) => {
+        toast({
+          title: "Table Creation Error",
+          description: error.message as string,
+          variant: "destructive",
+        });
+      });
+
+    const bulkInsertQuery = generateBulkInsertQuery({
+      tableName,
+      schema: dataSchema,
+      data,
+    });
+    console.log("bulkInsertQuery", bulkInsertQuery.query);
+
+    await db
+      .query(bulkInsertQuery.query)
+      .then((res) => {
+        console.log("data inserted", res);
+      })
+      .catch((error) => {
+        toast({
+          title: "Data Insertion Error",
+          description: error.message as string,
+          variant: "destructive",
+        });
+      });
+  };
+};
+
+export const useExecuteUserQuery = () => {
+  const db = usePGlite();
+  const { toast } = useToast();
+
+  const [queryResult, setQueryResult] = useState<{
+    queryResult: QueryResult;
+    timestamp: Date;
+  } | null>(null);
+
+  const executeQuery = async (query: string) => {
+    return db
+      .query(query, undefined, { parsers: noParse })
+      .then((res) => {
+        console.log("query result", res);
+        setQueryResult({
+          queryResult: res as QueryResult,
+          timestamp: new Date(),
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Query Error",
+          description: error.message as string,
+          variant: "destructive",
+        });
+      });
+  };
+
+  return {
+    queryResult,
+    executeQuery,
+  };
+};
+
+export const MainPage = () => {
+  const [query, setQuery] = useState("");
+
+  const createTableAndData = useCreateTableAndData();
+
+  const [header, setHeader] = useState<string[]>([]);
+  const [data, setData] = useState<any[][]>([]);
+
   const [tableName, setTableName] = useState<string>("");
+
+  const { queryResult, executeQuery } = useExecuteUserQuery();
 
   const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
@@ -35,42 +129,23 @@ export const MainPage = () => {
     setHeader(head);
     setData(rest);
 
-    const table = file.name.split(".").at(0)!;
+    const tblName = file.name.split(".").at(0)!;
 
-    const creatTableQuery = generateCreateTableQueryByCsv(table, head, rest);
-    console.log("creatTableQuery", creatTableQuery);
-    await db.query(creatTableQuery).then((res) => {
-      console.log("table created", res);
+    await createTableAndData({
+      tableName: tblName,
+      header: head,
+      data: rest,
     });
 
-    const { query } = generateBulkInsertQueryByCsv(table, head, rest);
-    await db.query(query).then((res) => {
-      console.log("data inserted", res);
-    });
-    setTableName(table);
-    setQuery(`SELECT *\nFROM ${table}`);
-  };
-
-  const onQuerySubmit = async () => {
-    return db
-      .query(query)
-      .then((res) => {
-        console.log("query result", res);
-        setQueryResult(res);
-      })
-      .catch((error) => {
-        toast({
-          title: "Query Error",
-          description: error.message as string,
-        });
-      });
+    setTableName(tblName);
+    setQuery(`SELECT *\nFROM ${escapeIdentifier(tblName)}`);
   };
 
   return (
     <div className="flex flex-col gap-8 p-4">
       <div>
         <Input
-          className="w-120"
+          className="w-auto"
           type="file"
           accept="text/csv"
           multiple={false}
@@ -93,20 +168,19 @@ export const MainPage = () => {
           onSubmit={(e) => {
             e.preventDefault();
 
-            onQuerySubmit();
+            executeQuery(query);
           }}
         >
-          <Textarea
-            className="font-mono mt-4"
-            placeholder="SELECT 1"
-            rows={10}
+          <QueryEditor
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
+            className="min-h-[10rem]"
+            onChange={(value, _viewUpdate) => {
+              setQuery(value);
             }}
+            placeholder={"SELECT 1"}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                onQuerySubmit();
+                executeQuery(query);
               }
             }}
           />
@@ -116,9 +190,14 @@ export const MainPage = () => {
         </form>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 space-y-4">
         <h2>Query Result</h2>
-        {queryResult && <QueryResultTable queryResult={queryResult} />}
+        {queryResult && (
+          <QueryResultTable
+            queryResult={queryResult.queryResult}
+            timestamp={queryResult.timestamp}
+          />
+        )}
       </Card>
     </div>
   );
