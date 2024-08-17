@@ -4,7 +4,7 @@ import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
 import { detectDataType } from "@/lib/db/detect-data-type.ts";
 import { formatDataToInsert } from "@/lib/db/format-data-to-insert.ts";
 
-type Schema = Array<{ columnName: string; pgType: PgType }>;
+export type TableSchema = Array<{ columnName: string; pgType: PgType }>;
 
 export type QueryResult = Awaited<ReturnType<DB["query"]>>;
 
@@ -15,7 +15,7 @@ export const generateDataSchemaFromCsvData = ({
   header: string[];
   data: string[][];
 }) => {
-  const schema: Schema = [];
+  const schema: TableSchema = [];
 
   const record = data[0];
 
@@ -31,7 +31,7 @@ export const generateDataSchemaFromCsvData = ({
 
 export const generateCreateTableQuery = (params: {
   tableName: string;
-  schema: Schema;
+  schema: TableSchema;
 }) => {
   const columns = params.schema.map(
     ({ columnName, pgType }) => `  ${escapeIdentifier(columnName)} ${pgType}`,
@@ -49,7 +49,7 @@ export const generateBulkInsertQuery = ({
   data,
 }: {
   tableName: string;
-  schema: Schema;
+  schema: TableSchema;
   data: string[][];
 }) => {
   const columns = schema

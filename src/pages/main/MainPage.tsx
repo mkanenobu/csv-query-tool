@@ -1,81 +1,14 @@
-import { Input } from "@/components/ui/input.tsx";
-import { type ChangeEvent, useState } from "react";
-import { parseCsv } from "@/lib/parse-csv.ts";
-import { DataPreviewTable } from "@/pages/main/DataPreviewTable.tsx";
-import { Card } from "@/components/ui/card.tsx";
-import { usePGlite } from "@electric-sql/pglite-react";
-import { QueryResultTable } from "@/pages/main/QueryResultTable.tsx";
-import { useToast } from "@/components/ui/use-toast.ts";
 import { Button } from "@/components/ui/button.tsx";
-import {
-  generateBulkInsertQuery,
-  generateCreateTableQuery,
-  generateDataSchemaFromCsvData,
-  type QueryResult,
-} from "@/lib/db/queries.ts";
-import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
-import { QueryEditor } from "@/pages/main/QueryEditor.tsx";
+import { Card } from "@/components/ui/card.tsx";
+import { useToast } from "@/components/ui/use-toast.ts";
+import type { QueryResult } from "@/lib/db/queries.ts";
 import { noParse } from "@/lib/db/query-options.ts";
-
-const useCreateTableAndData = () => {
-  const db = usePGlite();
-  const { toast } = useToast();
-
-  return async ({
-    tableName,
-    header,
-    data,
-  }: {
-    tableName: string;
-    header: string[];
-    data: string[][];
-  }) => {
-    const dataSchema = generateDataSchemaFromCsvData({
-      header,
-      data,
-    });
-
-    const creatTableQuery = generateCreateTableQuery({
-      tableName,
-      schema: dataSchema,
-    });
-    console.log("creatTableQuery", creatTableQuery);
-    await db
-      .query(creatTableQuery)
-      .then((res) => {
-        console.log("table created", res);
-      })
-      .catch((error) => {
-        console.error("table creation error", error);
-        toast({
-          title: "Table Creation Error",
-          description: error.message as string,
-          variant: "destructive",
-        });
-      });
-
-    const bulkInsertQuery = generateBulkInsertQuery({
-      tableName,
-      schema: dataSchema,
-      data,
-    });
-    console.log("bulkInsertQuery", bulkInsertQuery.query);
-
-    await db
-      .query(bulkInsertQuery.query)
-      .then((res) => {
-        console.log("data inserted", res);
-      })
-      .catch((error) => {
-        console.error("data insertion error", error);
-        toast({
-          title: "Data Insertion Error",
-          description: error.message as string,
-          variant: "destructive",
-        });
-      });
-  };
-};
+import { ImportForm } from "@/pages/main/ImportForm.tsx";
+import { Table } from "@/pages/main/PreviewTables.tsx";
+import { QueryEditor } from "@/pages/main/QueryEditor.tsx";
+import { QueryResultTable } from "@/pages/main/QueryResultTable.tsx";
+import { usePGlite } from "@electric-sql/pglite-react";
+import { useRef, useState } from "react";
 
 export const useExecuteUserQuery = () => {
   const db = usePGlite();
@@ -114,56 +47,32 @@ export const useExecuteUserQuery = () => {
 
 export const MainPage = () => {
   const [query, setQuery] = useState("");
+  const [tables, setTables] = useState<Array<Table>>([]);
 
-  const createTableAndData = useCreateTableAndData();
-
-  const [header, setHeader] = useState<string[]>([]);
-  const [data, setData] = useState<any[][]>([]);
+  const appendTable = (t: Table) => {
+    setTables((prev) => {
+      return [...prev, t];
+    });
+  };
 
   const [tableName, setTableName] = useState<string>("");
 
   const { queryResult, executeQuery } = useExecuteUserQuery();
 
-  const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.item(0);
-    if (!file) return;
-    const parsed = await parseCsv(file);
-    const [head, ...rest] = parsed;
-    setHeader(head);
-    setData(rest);
-
-    const tblName = file.name.split(".").at(0)!;
-
-    await createTableAndData({
-      tableName: tblName,
-      header: head,
-      data: rest,
-    });
-
-    setTableName(tblName);
-    setQuery(`SELECT *\nFROM ${escapeIdentifier(tblName)}`);
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex flex-col gap-8 p-4">
       <div>
-        <Input
-          className="w-auto"
-          type="file"
-          accept="text/csv"
-          multiple={false}
-          onChange={onFileSelected}
+        <ImportForm
+          inputRef={fileInputRef}
+          setTableName={setTableName}
+          setQuery={setQuery}
+          tableName={tableName}
+          tables={tables}
+          appendTableToList={appendTable}
         />
       </div>
-
-      <p>TableName: {tableName}</p>
-      <Card className="p-4">
-        <DataPreviewTable
-          header={header}
-          data={data.slice(0, 5)}
-          totalCount={data.length}
-        />
-      </Card>
 
       <Card className="p-4">
         <h2>Query</h2>
