@@ -11,7 +11,7 @@ import { formatValueToDisplay } from "@/lib/db/display.ts";
 import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
 import type { QueryResult } from "@/lib/db/queries.ts";
 import { noParse } from "@/lib/db/query-options.ts";
-import { pgTypesByTypeId, TypeId } from "@/lib/pg-types.ts";
+import { pgTypesByTypeId, TypeId } from "@/lib/db/pg-types.ts";
 import { usePGlite } from "@electric-sql/pglite-react";
 import { useEffect, useState } from "react";
 

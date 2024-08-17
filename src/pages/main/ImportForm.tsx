@@ -7,7 +7,7 @@ import {
   generateCreateTableQuery,
   generateDataSchemaFromCsvData,
 } from "@/lib/db/queries.ts";
-import { parseCsv } from "@/lib/parse-csv.ts";
+import { parseCsv } from "@/lib/csv.ts";
 import { PreviewTables, Table } from "@/pages/main/PreviewTables.tsx";
 import { usePGlite } from "@electric-sql/pglite-react";
 import {
@@ -129,19 +129,17 @@ export const ImportForm = ({
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 space-y-4">
       <Input
         ref={inputRef}
-        className="w-auto"
+        className="w-auto cursor-pointer"
         type="file"
         accept="text/csv"
         multiple={false}
         onChange={onFileSelected}
       />
 
-      {/*<p className="mt-6">Table name: {tableName}</p>*/}
       <PreviewTables tables={tables} />
-      {/*<DataPreviewTable tableName={tableName} />*/}
     </Card>
   );
 };

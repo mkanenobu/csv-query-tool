@@ -1,4 +1,4 @@
-import type { PgType } from "@/lib/pg-types.ts";
+import type { PgType } from "@/lib/db/pg-types.ts";
 import type { DB } from "@/lib/db/db.ts";
 import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
 import { detectDataType } from "@/lib/db/detect-data-type.ts";

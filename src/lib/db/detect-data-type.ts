@@ -1,4 +1,4 @@
-import { type PgType } from "@/lib/pg-types.ts";
+import { type PgType } from "@/lib/db/pg-types.ts";
 
 type Detector = (v: string) => boolean;
 

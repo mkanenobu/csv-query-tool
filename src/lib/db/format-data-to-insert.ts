@@ -1,4 +1,4 @@
-import type { PgType } from "@/lib/pg-types.ts";
+import type { PgType } from "@/lib/db/pg-types.ts";
 import { escapeText } from "@/lib/db/pg-utils/escape.ts";
 
 export const formatDataToInsert = (data: string, type: PgType) => {
