@@ -1,10 +1,4 @@
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-} from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -19,7 +13,13 @@ import {
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
-import { Button } from "@/components/ui/button";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 
 export type DataTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
@@ -124,7 +124,7 @@ export const DataTable = <TData, TValue>({
             table.getState().pagination.pageIndex * pageSize +
             pageSize
           ).toLocaleString()}{" "}
-          / {table.getRowCount()}
+          / {table.getRowCount().toLocaleString()}
         </span>
 
         <Button

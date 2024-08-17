@@ -21,7 +21,10 @@ export const QueryEditor = ({
       ]}
       height="100%"
       {...props}
-      className={cn("resize-y !overflow-auto font-mono", props.className)}
+      className={cn(
+        "resize-y !overflow-auto font-mono border",
+        props.className,
+      )}
       basicSetup={{
         tabSize: 2,
         foldGutter: false,

@@ -37,9 +37,12 @@ const PreviewTable = ({ table }: { table: Table }) => {
         <AccordionTrigger className="justify-normal gap-2">
           {table.name}
         </AccordionTrigger>
-        <AccordionContent>
+        <AccordionContent className="space-y-2">
           <p>Count: {count.toLocaleString()}</p>
-          <QueryEditor value={table.createTableQuery} readOnly />
+          <div>
+            Table schema:
+            <QueryEditor value={table.createTableQuery} readOnly />
+          </div>
         </AccordionContent>
       </AccordionItem>
     </Accordion>

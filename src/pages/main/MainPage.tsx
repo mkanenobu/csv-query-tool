@@ -88,7 +88,7 @@ export const MainPage = () => {
           >
             <QueryEditor
               value={query}
-              className="border min-h-[10rem]"
+              className="min-h-[10rem]"
               basicSetup={{
                 autocompletion: true,
               }}
