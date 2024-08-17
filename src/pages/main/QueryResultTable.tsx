@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { stringifyCsv } from "@/lib/csv.ts";
 import { formatValueToDisplay } from "@/lib/db/display.ts";
+import { pgTypesByTypeId, type TypeId } from "@/lib/db/pg-types.ts";
 import type { QueryResult } from "@/lib/db/queries.ts";
 import { downloadFile } from "@/lib/file-download.ts";
 import dayjs from "dayjs";
@@ -61,7 +62,11 @@ export const QueryResultTable = ({
       <DataTable
         // FIXME: non-unique key error when duplicates field name
         columns={fields.map((f) => ({
-          accessorFn: (row: any) => formatValueToDisplay(row[f.name]),
+          accessorFn: (row: any) =>
+            formatValueToDisplay(
+              row[f.name],
+              pgTypesByTypeId[f.dataTypeID as TypeId],
+            ),
           header: f.name,
         }))}
         data={rows}

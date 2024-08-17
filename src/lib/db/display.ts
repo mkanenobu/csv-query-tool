@@ -1,11 +1,11 @@
-export const formatValueToDisplay = (value: any) => {
+import type { PgType } from "@/lib/db/pg-types.ts";
+
+export const formatValueToDisplay = (value: any, pgType: PgType) => {
   if (value === null) {
     return "NULL";
-  } else if (typeof value === "object") {
-    return JSON.stringify(value, undefined, 2);
-  } else if (typeof value === "string") {
-    return value;
+  } else if (pgType === "TEXT") {
+    return JSON.stringify(value);
   } else {
-    return value.toString();
+    return value;
   }
 };
