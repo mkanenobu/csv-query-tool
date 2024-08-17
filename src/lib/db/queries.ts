@@ -17,6 +17,7 @@ export const generateDataSchemaFromCsvData = ({
 }) => {
   const schema: TableSchema = [];
 
+  // TODO: Detect type from multiple records
   const record = data[0];
 
   header.forEach((h, i) => {
@@ -52,6 +53,7 @@ export const generateBulkInsertQuery = ({
   schema: TableSchema;
   data: string[][];
 }) => {
+  // TODO: parameterized query
   const columns = schema
     .map(({ columnName }) => `${escapeIdentifier(columnName)}`)
     .join(", ");

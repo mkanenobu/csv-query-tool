@@ -1,3 +1,6 @@
+import { usePGlite } from "@electric-sql/pglite-react";
+import { useEffect, useState } from "react";
+
 export const pgTypes = {
   BOOL: 16,
   BYTEA: 17,
@@ -67,3 +70,45 @@ export type PgType = keyof typeof pgTypes;
 export const pgTypesByTypeId = Object.fromEntries(
   Object.entries(pgTypes).map(([key, value]) => [value, key]),
 ) as Record<TypeId, PgType>;
+
+export const usePgTypes = () => {
+  const db = usePGlite();
+  const [cache, setCache] = useState<Record<number, string> | null>(null);
+
+  /**
+   * Get all types from "pg_type"
+   */
+  const getTypes = async () => {
+    const getTypesQuery = `SELECT oid, UPPER(typname) AS typename FROM pg_type`;
+
+    return db
+      .query(getTypesQuery)
+      .then((res) => {
+        const types: Record<number, string> = {};
+        res.rows.forEach((r) => {
+          // @ts-expect-error
+          types[r.oid] = r.typename;
+        });
+        return types;
+      })
+      .catch((error) => {
+        console.error("getTypes error", error);
+        throw error;
+      });
+  };
+
+  useEffect(() => {
+    if (!cache) {
+      getTypes().then(setCache);
+    }
+  }, [cache]);
+
+  return {
+    getTypeNameByTypeId: (typeId: number) => {
+      if (!cache) {
+        return undefined;
+      }
+      return cache[typeId];
+    },
+  };
+};

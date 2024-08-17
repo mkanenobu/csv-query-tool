@@ -38,7 +38,7 @@ const PreviewTable = ({ table }: { table: Table }) => {
           {table.name}
         </AccordionTrigger>
         <AccordionContent>
-          <p>Count: {count}</p>
+          <p>Count: {count.toLocaleString()}</p>
           <QueryEditor value={table.createTableQuery} readOnly />
         </AccordionContent>
       </AccordionItem>

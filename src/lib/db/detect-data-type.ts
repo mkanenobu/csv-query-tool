@@ -22,6 +22,12 @@ const isTimestamp = (v: string): boolean => {
   return pattern.test(v);
 };
 
+const isUUID = (v: string): boolean => {
+  const pattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return pattern.test(v);
+};
+
 const detectors = [
   {
     detector: isInteger,
@@ -38,6 +44,10 @@ const detectors = [
   {
     detector: isTimestamp,
     pgType: "TIMESTAMP",
+  },
+  {
+    detector: isUUID,
+    pgType: "UUID",
   },
 ] satisfies Array<{ detector: Detector; pgType: PgType }>;
 

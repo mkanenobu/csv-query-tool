@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { stringifyCsv } from "@/lib/csv.ts";
 import { formatValueToDisplay } from "@/lib/db/display.ts";
-import { pgTypesByTypeId, type TypeId } from "@/lib/db/pg-types.ts";
+import { pgTypesByTypeId, usePgTypes, type TypeId } from "@/lib/db/pg-types.ts";
 import type { QueryResult } from "@/lib/db/queries.ts";
 import { downloadFile } from "@/lib/file-download.ts";
 import dayjs from "dayjs";
@@ -51,6 +51,7 @@ export const QueryResultTable = ({
   timestamp: Date;
 }) => {
   const { fields, rows } = queryResult;
+  const { getTypeNameByTypeId } = usePgTypes();
 
   return (
     <div className="space-y-4">
@@ -67,7 +68,7 @@ export const QueryResultTable = ({
               row[f.name],
               pgTypesByTypeId[f.dataTypeID as TypeId],
             ),
-          header: f.name,
+          header: `${f.name} (${getTypeNameByTypeId(f.dataTypeID) ?? f.dataTypeID})`,
         }))}
         data={rows}
       />

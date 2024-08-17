@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { useToast } from "@/components/ui/use-toast.ts";
+import { parseCsv } from "@/lib/csv.ts";
 import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
 import {
   generateBulkInsertQuery,
   generateCreateTableQuery,
   generateDataSchemaFromCsvData,
 } from "@/lib/db/queries.ts";
-import { parseCsv } from "@/lib/csv.ts";
 import { PreviewTables, Table } from "@/pages/main/PreviewTables.tsx";
 import { usePGlite } from "@electric-sql/pglite-react";
 import {
@@ -85,15 +85,11 @@ const useCreateTableAndData = (appendTableToList: (table: Table) => void) => {
 
 export const ImportForm = ({
   inputRef,
-  tableName,
-  setTableName,
   setQuery,
   tables,
   appendTableToList,
 }: {
   inputRef: RefObject<HTMLInputElement>;
-  tableName: string;
-  setTableName: (tbl: string) => void;
   setQuery: Dispatch<SetStateAction<string>>;
   tables: Array<Table>;
   appendTableToList: (table: Table) => void;
@@ -120,7 +116,6 @@ export const ImportForm = ({
       data: rest,
     });
 
-    setTableName(tblName);
     setQuery((p) => {
       if (p) return p;
       return `SELECT *\nFROM ${escapeIdentifier(tblName)}`;

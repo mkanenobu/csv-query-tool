@@ -14,12 +14,16 @@ export const useExecuteUserQuery = () => {
   const db = usePGlite();
   const { toast } = useToast();
 
+  const [executing, setExecuting] = useState(false);
   const [queryResult, setQueryResult] = useState<{
     queryResult: QueryResult;
     timestamp: Date;
   } | null>(null);
 
   const executeQuery = async (query: string) => {
+    if (!query) return;
+
+    setExecuting(true);
     return db
       .query(query, undefined, { parsers: noParse })
       .then((res) => {
@@ -36,12 +40,16 @@ export const useExecuteUserQuery = () => {
           description: error.message as string,
           variant: "destructive",
         });
+      })
+      .finally(() => {
+        setExecuting(false);
       });
   };
 
   return {
     queryResult,
     executeQuery,
+    executing,
   };
 };
 
@@ -55,9 +63,7 @@ export const MainPage = () => {
     });
   };
 
-  const [tableName, setTableName] = useState<string>("");
-
-  const { queryResult, executeQuery } = useExecuteUserQuery();
+  const { queryResult, executeQuery, executing } = useExecuteUserQuery();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,41 +72,43 @@ export const MainPage = () => {
       <div>
         <ImportForm
           inputRef={fileInputRef}
-          setTableName={setTableName}
           setQuery={setQuery}
-          tableName={tableName}
           tables={tables}
           appendTableToList={appendTable}
         />
+
+        <Card className="p-4 grow">
+          <h2>Query</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+
+              executeQuery(query);
+            }}
+          >
+            <QueryEditor
+              value={query}
+              className="border min-h-[10rem]"
+              basicSetup={{
+                autocompletion: true,
+              }}
+              onChange={(value, _viewUpdate) => {
+                setQuery(value);
+              }}
+              placeholder={"SELECT 1"}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  executeQuery(query);
+                }
+              }}
+            />
+            <Button className="mt-4" type="submit" disabled={executing}>
+              Exec
+            </Button>
+          </form>
+        </Card>
       </div>
-
-      <Card className="p-4">
-        <h2>Query</h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-
-            executeQuery(query);
-          }}
-        >
-          <QueryEditor
-            value={query}
-            className="min-h-[10rem]"
-            onChange={(value, _viewUpdate) => {
-              setQuery(value);
-            }}
-            placeholder={"SELECT 1"}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                executeQuery(query);
-              }
-            }}
-          />
-          <Button className="mt-4" type="submit">
-            Exec
-          </Button>
-        </form>
-      </Card>
 
       <Card className="p-4 space-y-4">
         <h2>Query Result</h2>
