@@ -8,3 +8,10 @@ Install
 npm install
 npm run build-app
 ```
+
+## Tech Stack
+
+- PGlite (WASM build of Postgres)
+- Tauri
+- React
+- shadcn/ui (Tailwind CSS)
