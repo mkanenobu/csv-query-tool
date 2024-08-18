@@ -2,7 +2,9 @@
 
 ## Command
 
-Install
+Build & Install
+
+Requires Node.js and Rust to be installed.
 
 ```bash
 npm install
