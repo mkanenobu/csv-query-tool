@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button.tsx";
 import {
   Dialog,
   DialogClose,
@@ -7,18 +8,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
 import { QueryEditor } from "@/pages/main/QueryEditor.tsx";
 import { useState } from "react";
 
 export const ImportDialog = ({
   open,
   onOpenChange,
+  initialTableName,
+  initialCreateTableQuery,
+  onImport,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  initialTableName: string;
+  initialCreateTableQuery: string;
+  onImport: (params: {
+    createTableQuery: string;
+    tableName: string;
+  }) => Promise<void>;
 }) => {
-  const [query, setQuery] = useState("SELECT 2");
+  const [tableName, setTableName] = useState(initialTableName);
+  const [createTableQuery, setCreateTableQuery] = useState(
+    initialCreateTableQuery,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -27,9 +39,9 @@ export const ImportDialog = ({
           <DialogTitle>Create table with following query</DialogTitle>
           <DialogDescription className="p-4">
             <QueryEditor
-              value={query}
+              value={createTableQuery}
               onChange={(q) => {
-                setQuery(q);
+                setCreateTableQuery(q);
               }}
             />
           </DialogDescription>
@@ -42,7 +54,19 @@ export const ImportDialog = ({
             </Button>
           </DialogClose>
 
-          <Button type="button">Import</Button>
+          <Button
+            type="button"
+            onClick={() => {
+              onImport({
+                createTableQuery,
+                tableName,
+              }).finally(() => {
+                onOpenChange(false);
+              });
+            }}
+          >
+            Import
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

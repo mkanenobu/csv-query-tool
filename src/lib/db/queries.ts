@@ -1,8 +1,8 @@
-import type { PgType } from "@/lib/db/pg-types.ts";
 import type { DB } from "@/lib/db/db.ts";
-import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
 import { detectDataType } from "@/lib/db/detect-data-type.ts";
 import { formatDataToInsert } from "@/lib/db/format-data-to-insert.ts";
+import type { PgType } from "@/lib/db/pg-types.ts";
+import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
 
 export type TableSchema = Array<{ columnName: string; pgType: PgType }>;
 
@@ -53,7 +53,6 @@ export const generateBulkInsertQuery = ({
   schema: TableSchema;
   data: string[][];
 }) => {
-  // TODO: parameterized query
   const columns = schema
     .map(({ columnName }) => `${escapeIdentifier(columnName)}`)
     .join(", ");
@@ -67,5 +66,9 @@ export const generateBulkInsertQuery = ({
 
   const bulkInsertQuery = `INSERT INTO ${escapeIdentifier(tableName)} (${columns})
 VALUES ${values.join(",\n")};`;
-  return { query: bulkInsertQuery, params: data.flat() };
+  return { query: bulkInsertQuery, params: [] };
+};
+
+export const dropTableQuery = (tableName: string) => {
+  return `DROP TABLE IF EXISTS ${escapeIdentifier(tableName)};`;
 };

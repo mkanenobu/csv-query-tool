@@ -4,7 +4,11 @@ export const formatValueToDisplay = (value: any, pgType: PgType) => {
   if (value === null) {
     return "NULL";
   } else if (pgType === "TEXT") {
-    return JSON.stringify(value);
+    if (typeof value === "string" && value.length === 0) {
+      // Empty string
+      return '""';
+    }
+    return value;
   } else {
     return value;
   }

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Card } from "@/components/ui/card.tsx";
 import { useToast } from "@/components/ui/use-toast.ts";
+import { parseSQL } from "@/lib/db/pg-utils/parse-sql.ts";
 import type { QueryResult } from "@/lib/db/queries.ts";
 import { noParse } from "@/lib/db/query-options.ts";
 import { ImportForm } from "@/pages/main/ImportForm.tsx";
@@ -62,6 +63,11 @@ export const MainPage = () => {
       return [...prev, t];
     });
   };
+  const removeTable = (tableName: string) => {
+    setTables((prev) => {
+      return prev.filter((table) => table.name !== tableName);
+    });
+  };
 
   const { queryResult, executeQuery, executing } = useExecuteUserQuery();
 
@@ -75,6 +81,7 @@ export const MainPage = () => {
           setQuery={setQuery}
           tables={tables}
           appendTableToList={appendTable}
+          removeTableFromList={removeTable}
         />
 
         <Card className="p-4 grow">
@@ -92,6 +99,21 @@ export const MainPage = () => {
               basicSetup={{
                 autocompletion: true,
               }}
+              completionWords={tables.reduce((acc, table) => {
+                acc.push(table.name);
+
+                const parsed = parseSQL(table.createTableQuery).at(0);
+                if (!parsed) return acc;
+                if (parsed.type !== "create table") return acc;
+
+                parsed.columns.forEach((col) => {
+                  if (col.kind === "column") {
+                    acc.push(col.name.name);
+                  }
+                });
+
+                return acc;
+              }, [] as string[])}
               onChange={(value, _viewUpdate) => {
                 setQuery(value);
               }}

@@ -3,11 +3,14 @@ import { Input } from "@/components/ui/input.tsx";
 import { useToast } from "@/components/ui/use-toast.ts";
 import { parseCsv } from "@/lib/csv.ts";
 import { escapeIdentifier } from "@/lib/db/pg-utils/escape.ts";
+import { getTableSchemaFromCreateQuery } from "@/lib/db/pg-utils/parse-sql.ts";
 import {
   generateBulkInsertQuery,
   generateCreateTableQuery,
   generateDataSchemaFromCsvData,
+  type TableSchema,
 } from "@/lib/db/queries.ts";
+import { ImportDialog } from "@/pages/main/ImportDialog.tsx";
 import { PreviewTables, Table } from "@/pages/main/PreviewTables.tsx";
 import { usePGlite } from "@electric-sql/pglite-react";
 import {
@@ -15,31 +18,25 @@ import {
   type Dispatch,
   type RefObject,
   type SetStateAction,
+  useState,
 } from "react";
 
-const useCreateTableAndData = (appendTableToList: (table: Table) => void) => {
+const useCreateTableAndData = () => {
   const db = usePGlite();
   const { toast } = useToast();
 
   return async ({
     tableName,
-    header,
+    createTableQuery,
+    dataSchema,
     data,
   }: {
     tableName: string;
-    header: string[];
+    createTableQuery: string;
+    dataSchema: TableSchema;
     data: string[][];
   }) => {
-    const dataSchema = generateDataSchemaFromCsvData({
-      header,
-      data,
-    });
-
-    const createTableQuery = generateCreateTableQuery({
-      tableName,
-      schema: dataSchema,
-    });
-    console.log("creatTableQuery", createTableQuery);
+    console.log("createTableQuery", createTableQuery);
     await db
       .query(createTableQuery)
       .then((res) => {
@@ -57,13 +54,13 @@ const useCreateTableAndData = (appendTableToList: (table: Table) => void) => {
 
     const bulkInsertQuery = generateBulkInsertQuery({
       tableName,
-      schema: dataSchema,
+      schema: getTableSchemaFromCreateQuery(createTableQuery),
       data,
     });
     console.log("bulkInsertQuery", bulkInsertQuery.query);
 
     await db
-      .query(bulkInsertQuery.query)
+      .query(bulkInsertQuery.query, bulkInsertQuery.params)
       .then((res) => {
         console.log("data inserted", res);
       })
@@ -76,12 +73,6 @@ const useCreateTableAndData = (appendTableToList: (table: Table) => void) => {
         });
         throw error;
       });
-
-    appendTableToList({
-      name: tableName,
-      schema: dataSchema,
-      createTableQuery,
-    });
   };
 };
 
@@ -90,20 +81,39 @@ export const ImportForm = ({
   setQuery,
   tables,
   appendTableToList,
+  removeTableFromList,
 }: {
   inputRef: RefObject<HTMLInputElement>;
   setQuery: Dispatch<SetStateAction<string>>;
   tables: Array<Table>;
   appendTableToList: (table: Table) => void;
+  removeTableFromList: (tableName: string) => void;
 }) => {
   const { toast } = useToast();
-  const createTableAndData = useCreateTableAndData(appendTableToList);
+  const createTableAndData = useCreateTableAndData();
+
+  const [importInfo, setImportInfo] = useState<{
+    tableName: string;
+    createTableQuery: string;
+    dataSchema: TableSchema;
+    sourceFilename: string;
+    data: string[][];
+  } | null>(null);
 
   const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
     if (!file) return;
     const parsed = await parseCsv(file);
     const [head, ...rest] = parsed;
+
+    if (tables.find((t) => t.sourceFilename === file.name)) {
+      toast({
+        title: "Table already exists",
+        description: "Table with the same source file name already exists",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const tblName = (() => {
       const segments = file.name.split(".");
@@ -113,10 +123,38 @@ export const ImportForm = ({
       return segments.join(".");
     })();
 
-    const success = await createTableAndData({
-      tableName: tblName,
+    const dataSchema = generateDataSchemaFromCsvData({
       header: head,
       data: rest,
+    });
+
+    const createTableQuery_ = generateCreateTableQuery({
+      tableName: tblName,
+      schema: dataSchema,
+    });
+
+    // Give params to ImportDialog via local state
+    setImportInfo({
+      createTableQuery: createTableQuery_,
+      dataSchema,
+      data: rest,
+      tableName: tblName,
+      sourceFilename: file.name,
+    });
+  };
+
+  const onImport = async ({
+    tableName,
+    createTableQuery,
+    dataSchema,
+    data,
+    sourceFilename,
+  }: NonNullable<typeof importInfo>) => {
+    const success = await createTableAndData({
+      tableName,
+      createTableQuery,
+      dataSchema,
+      data,
     })
       .then(() => {
         return true;
@@ -125,18 +163,28 @@ export const ImportForm = ({
         return false;
       });
 
-    if (!success) return;
+    inputRef.current!.value = "";
+
+    if (!success) {
+      setImportInfo(null);
+      return;
+    }
 
     setQuery((p) => {
       if (p) return p;
-      return `SELECT *\nFROM ${escapeIdentifier(tblName)}`;
+      return `SELECT *\nFROM ${escapeIdentifier(tableName)}`;
     });
-    inputRef.current!.value = "";
+
+    appendTableToList({
+      name: tableName,
+      sourceFilename,
+      createTableQuery,
+    });
+
+    setImportInfo(null);
 
     toast({
       title: "Table created and data inserted",
-      variant: "success",
-      className: "bg-white",
     });
   };
 
@@ -150,8 +198,26 @@ export const ImportForm = ({
         multiple={false}
         onChange={onFileSelected}
       />
+      {importInfo && (
+        <ImportDialog
+          open={!!importInfo}
+          onOpenChange={(o) => {
+            if (!o) {
+              setImportInfo(null);
+            }
+          }}
+          initialTableName={importInfo.tableName}
+          initialCreateTableQuery={importInfo.createTableQuery}
+          onImport={async ({ createTableQuery, tableName }) => {
+            return onImport({ ...importInfo, createTableQuery, tableName });
+          }}
+        />
+      )}
 
-      <PreviewTables tables={tables} />
+      <PreviewTables
+        tables={tables}
+        removeTableFromList={removeTableFromList}
+      />
     </Card>
   );
 };

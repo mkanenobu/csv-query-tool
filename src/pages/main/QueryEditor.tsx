@@ -6,17 +6,19 @@ import CodeMirror, {
 } from "@uiw/react-codemirror";
 
 export const QueryEditor = ({
+  completionWords,
   ...props
 }: Omit<ReactCodeMirrorProps, "basicSetup"> & {
   basicSetup?: BasicSetupOptions;
+  completionWords?: string[];
 }) => {
   return (
     <CodeMirror
-      // TODO: pass schema for completion
       extensions={[
         sql({
           dialect: PostgreSQL,
-          upperCaseKeywords: true,
+          // HACK: {[schema]:{[table]:column[]}} data schema is not working, so pass flat string array
+          schema: completionWords,
         }),
       ]}
       height="100%"
