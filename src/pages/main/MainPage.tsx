@@ -10,6 +10,7 @@ import { QueryEditor } from "@/pages/main/QueryEditor.tsx";
 import { QueryResultTable } from "@/pages/main/QueryResultTable.tsx";
 import { usePGlite } from "@electric-sql/pglite-react";
 import { useRef, useState } from "react";
+import { logger } from "@/lib/logger.ts";
 
 export const useExecuteUserQuery = () => {
   const db = usePGlite();
@@ -28,14 +29,14 @@ export const useExecuteUserQuery = () => {
     return db
       .query(query, undefined, { parsers: noParse })
       .then((res) => {
-        console.log("query result", res);
+        logger.log("query result", res);
         setQueryResult({
           queryResult: res as QueryResult,
           timestamp: new Date(),
         });
       })
       .catch((error) => {
-        console.error("query error", error);
+        logger.error("query error", error);
         toast({
           title: "Query Error",
           description: error.message as string,

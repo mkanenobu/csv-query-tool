@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger.ts";
 import { usePGlite } from "@electric-sql/pglite-react";
 import { useEffect, useState } from "react";
 
@@ -92,7 +93,7 @@ export const usePgTypes = () => {
         return types;
       })
       .catch((error) => {
-        console.error("getTypes error", error);
+        logger.error(`getTypes error: ${error.message}`, error);
         throw error;
       });
   };

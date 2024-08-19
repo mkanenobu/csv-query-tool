@@ -8,8 +8,8 @@ import {
   generateBulkInsertQuery,
   generateCreateTableQuery,
   generateDataSchemaFromCsvData,
-  type TableSchema,
 } from "@/lib/db/queries.ts";
+import { logger } from "@/lib/logger.ts";
 import { ImportDialog } from "@/pages/main/ImportDialog.tsx";
 import { PreviewTables, Table } from "@/pages/main/PreviewTables.tsx";
 import { usePGlite } from "@electric-sql/pglite-react";
@@ -28,22 +28,20 @@ const useCreateTableAndData = () => {
   return async ({
     tableName,
     createTableQuery,
-    dataSchema,
     data,
   }: {
     tableName: string;
     createTableQuery: string;
-    dataSchema: TableSchema;
     data: string[][];
   }) => {
-    console.log("createTableQuery", createTableQuery);
+    logger.log("createTableQuery", createTableQuery);
     await db
       .query(createTableQuery)
       .then((res) => {
-        console.log("table created", res);
+        logger.log("table created", res);
       })
       .catch((error) => {
-        console.error("table creation error", error);
+        logger.error(`table creation error: ${error.message}`, error);
         toast({
           title: "Table Creation Error",
           description: error.message as string,
@@ -57,15 +55,15 @@ const useCreateTableAndData = () => {
       schema: getTableSchemaFromCreateQuery(createTableQuery),
       data,
     });
-    console.log("bulkInsertQuery", bulkInsertQuery.query);
+    logger.log("bulkInsertQuery", bulkInsertQuery.query);
 
     await db
       .query(bulkInsertQuery.query, bulkInsertQuery.params)
       .then((res) => {
-        console.log("data inserted", res);
+        logger.log("data inserted", res);
       })
       .catch((error) => {
-        console.error("data insertion error", error);
+        logger.error(`data insertion error: ${error.message}`, error);
         toast({
           title: "Data Insertion Error",
           description: error.message as string,
@@ -95,7 +93,6 @@ export const ImportForm = ({
   const [importInfo, setImportInfo] = useState<{
     tableName: string;
     createTableQuery: string;
-    dataSchema: TableSchema;
     sourceFilename: string;
     data: string[][];
   } | null>(null);
@@ -136,7 +133,6 @@ export const ImportForm = ({
     // Give params to ImportDialog via local state
     setImportInfo({
       createTableQuery: createTableQuery_,
-      dataSchema,
       data: rest,
       tableName: "", // Use createTableQuery to get tableName
       sourceFilename: file.name,
@@ -146,14 +142,12 @@ export const ImportForm = ({
   const onImport = async ({
     tableName,
     createTableQuery,
-    dataSchema,
     data,
     sourceFilename,
   }: NonNullable<typeof importInfo>) => {
     const success = await createTableAndData({
       tableName,
       createTableQuery,
-      dataSchema,
       data,
     })
       .then(() => {
