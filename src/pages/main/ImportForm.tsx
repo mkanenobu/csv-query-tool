@@ -138,7 +138,7 @@ export const ImportForm = ({
       createTableQuery: createTableQuery_,
       dataSchema,
       data: rest,
-      tableName: tblName,
+      tableName: "", // Use createTableQuery to get tableName
       sourceFilename: file.name,
     });
   };
@@ -206,7 +206,6 @@ export const ImportForm = ({
               setImportInfo(null);
             }
           }}
-          initialTableName={importInfo.tableName}
           initialCreateTableQuery={importInfo.createTableQuery}
           onImport={async ({ createTableQuery, tableName }) => {
             return onImport({ ...importInfo, createTableQuery, tableName });

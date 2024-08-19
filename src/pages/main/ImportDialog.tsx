@@ -8,26 +8,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog.tsx";
+import { parseSQL } from "@/lib/db/pg-utils/parse-sql.ts";
 import { QueryEditor } from "@/pages/main/QueryEditor.tsx";
 import { useState } from "react";
 
 export const ImportDialog = ({
   open,
   onOpenChange,
-  initialTableName,
   initialCreateTableQuery,
   onImport,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  initialTableName: string;
   initialCreateTableQuery: string;
   onImport: (params: {
     createTableQuery: string;
     tableName: string;
   }) => Promise<void>;
 }) => {
-  const [tableName, setTableName] = useState(initialTableName);
   const [createTableQuery, setCreateTableQuery] = useState(
     initialCreateTableQuery,
   );
@@ -37,7 +35,7 @@ export const ImportDialog = ({
       <DialogContent className="min-w-[75vw]">
         <DialogHeader>
           <DialogTitle>Create table with following query</DialogTitle>
-          <DialogDescription className="p-4">
+          <DialogDescription className="p-4 space-y-4">
             <QueryEditor
               value={createTableQuery}
               onChange={(q) => {
@@ -57,7 +55,12 @@ export const ImportDialog = ({
           <Button
             type="button"
             onClick={() => {
-              onImport({
+              const parsed = parseSQL(createTableQuery).at(0);
+              if (!parsed || parsed.type !== "create table") return;
+
+              const tableName = parsed.name.name;
+
+              return onImport({
                 createTableQuery,
                 tableName,
               }).finally(() => {

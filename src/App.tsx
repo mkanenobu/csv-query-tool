@@ -7,7 +7,7 @@ export const App = () => {
   const dbPromise = initDB();
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
       <ProviderGroup dbPromise={dbPromise}>
         <Layout />
       </ProviderGroup>
