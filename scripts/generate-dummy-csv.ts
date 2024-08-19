@@ -3,8 +3,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 
 const main = async () => {
-  // ten thousand rows
-  const rowCount = 10_000;
+  const rowCount = 100_000;
 
   const columns = ["id", "uuid", "name", "n"];
 
@@ -17,7 +16,7 @@ const main = async () => {
     columns,
   });
 
-  const filename = "dummy-data/ten_thousand_rows.csv";
+  const filename = "dummy-data/one_hundred_thousand_rows.csv";
   await fs.writeFile(filename, buf).then(() => {
     console.log(`Wrote ${rowCount} rows to ${filename}`);
   });
