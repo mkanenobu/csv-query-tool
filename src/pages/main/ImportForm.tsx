@@ -136,6 +136,7 @@ export const ImportForm = ({
     toast({
       title: "Table created and data inserted",
       variant: "success",
+      className: "bg-white",
     });
   };
 
