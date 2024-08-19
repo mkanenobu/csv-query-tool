@@ -69,7 +69,7 @@ export const MainPage = () => {
 
   return (
     <div className="flex flex-col gap-8 p-6">
-      <div>
+      <div className="space-y-8">
         <ImportForm
           inputRef={fileInputRef}
           setQuery={setQuery}
