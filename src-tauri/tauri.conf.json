@@ -6,7 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "csv-query-tool",
+    "productName": "CsvQueryTool",
     "version": "0.1.0"
   },
   "tauri": {
@@ -19,7 +19,7 @@
     },
     "windows": [
       {
-        "title": "csv-query-tool",
+        "title": "CsvQueryTool",
         "width": 1280,
         "height": 896
       }
