@@ -35,7 +35,10 @@ const ExportMenu = ({ queryResult }: { queryResult: QueryResult }) => {
         <Button>Export</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={() => exportCsv(queryResult)}>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => exportCsv(queryResult)}
+        >
           CSV
         </DropdownMenuItem>
       </DropdownMenuContent>

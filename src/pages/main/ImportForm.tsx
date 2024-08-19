@@ -52,6 +52,7 @@ const useCreateTableAndData = (appendTableToList: (table: Table) => void) => {
           description: error.message as string,
           variant: "destructive",
         });
+        throw error;
       });
 
     const bulkInsertQuery = generateBulkInsertQuery({
@@ -73,6 +74,7 @@ const useCreateTableAndData = (appendTableToList: (table: Table) => void) => {
           description: error.message as string,
           variant: "destructive",
         });
+        throw error;
       });
 
     appendTableToList({
@@ -94,6 +96,7 @@ export const ImportForm = ({
   tables: Array<Table>;
   appendTableToList: (table: Table) => void;
 }) => {
+  const { toast } = useToast();
   const createTableAndData = useCreateTableAndData(appendTableToList);
 
   const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -110,17 +113,30 @@ export const ImportForm = ({
       return segments.join(".");
     })();
 
-    await createTableAndData({
+    const success = await createTableAndData({
       tableName: tblName,
       header: head,
       data: rest,
-    });
+    })
+      .then(() => {
+        return true;
+      })
+      .catch((_err) => {
+        return false;
+      });
+
+    if (!success) return;
 
     setQuery((p) => {
       if (p) return p;
       return `SELECT *\nFROM ${escapeIdentifier(tblName)}`;
     });
     inputRef.current!.value = "";
+
+    toast({
+      title: "Table created and data inserted",
+      variant: "success",
+    });
   };
 
   return (
